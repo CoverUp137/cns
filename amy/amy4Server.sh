@@ -74,7 +74,10 @@ GetAbi() {
 	elif echo "$machine"|grep -q 's390x'; then
 		machine='s390x'
 	else
-		machine='amd64'
+		# machine='amd64'
+    elif echo "$machine"|grep -Eq 'x86_64|x64|amd64'; then
+        machine='amd64'
+    else
 	fi
 }
 
