@@ -71,8 +71,8 @@ InstallFiles() {
 	fi
 	mkdir -p "$cns_install_dir" || Error "Create cns install directory failed."
 	cd "$cns_install_dir" || exit 1
-	$download_tool_cmd cns https://cns.010504.xyz/cns/${cns_UPX}/linux_${machine}${softfloat} || Error "cns download failed."
-	$download_tool_cmd cns.init https://cns.010504.xyz/cns/cns.init || Error "cns.init download failed."
+	$download_tool_cmd cns https://gh.0507.dpdns.org/https://github.com/CoverUp137/cns/raw/refs/heads/main/cns/${cns_UPX}/linux_${machine}${softfloat} || Error "cns download failed."
+	$download_tool_cmd cns.init https://gh.0507.dpdns.org/https://raw.githubusercontent.com/CoverUp137/cns/refs/heads/main/cns/cns.init || Error "cns.init download failed."
 	[ -f '/etc/rc.common' ] && rcCommon='/etc/rc.common'
 	sed -i "s~#!/bin/sh~#!$SHELL $rcCommon~" cns.init
 	sed -i "s~\[cns_start_cmd\]~$cns_start_cmd~g" cns.init
@@ -99,7 +99,7 @@ InstallFiles() {
 	EOF
 	chmod -R +rwx "$cns_install_dir" /etc/init.d/cns
 	if type systemctl && [ -z "$(systemctl --failed|grep -q 'Host is down')" ]; then
-		$download_tool_cmd /lib/systemd/system/cns.service https://cns.010504.xyz/cns/cns.service || Error "cns.service download failed."
+		$download_tool_cmd /lib/systemd/system/cns.service https://gh.0507.dpdns.org/https://raw.githubusercontent.com/CoverUp137/cns/refs/heads/main/cns/cns.service || Error "cns.service download failed."
 		chmod +rwx /lib/systemd/system/cns.service
 		sed -i "s~\[cns_install_dir\]~$cns_install_dir~g"  /lib/systemd/system/cns.service
 		systemctl daemon-reload
