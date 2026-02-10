@@ -149,7 +149,7 @@ cns_task() {
 
 
 amy4Server_task() {
-	if $download_tool_cmd amy4Server.sh https://gh.0507.dpdns.org/https://raw.githubusercontent.com/CoverUp137/cns/refs/heads/main/amy/amy4Server.sh; then
+	if $download_tool_cmd amy4Server.sh https://gh.0507.dpdns.org/https://raw.githubusercontent.com/CoverUp137/cns/refs/heads/main/amy4Server/amy4Server.sh; then
 		chmod 777 amy4Server.sh
 		sed -i "s~#\!/bin/bash~#\!$SHELL~" amy4Server.sh
 		echo $echo_opt_e "n"|./amy4Server.sh $task_type && \
