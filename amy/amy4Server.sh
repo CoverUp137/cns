@@ -95,11 +95,9 @@ InstallFiles() {
 	fi
 	mkdir -p "$amy4Server_install_dir" || Error "Create amy4Server install directory failed."
 	cd "$amy4Server_install_dir" || exit 1
-	
-	# 修改后的下载地址
-	download_tool amy4Server https://gh.0507.dpdns.org/https://github.com/CoverUp137/cns/releases/download/amy/${amy4Server_UPX}/amy4Server-linux-${machine}${softfloat} || Error "amy4Server download failed."
-	download_tool amy4Server.init https://gh.0507.dpdns.org/https://raw.githubusercontent.com/CoverUp137/cns/refs/heads/main/amy/amy4Server.init || Error "amy4Server.init download failed."
-	
+	github_repo="https://gh.0507.dpdns.org/https://github.com/CoverUp137/cns/releases/download/amy"
+	download_tool amy4Server "$github_repo/${amy4Server_UPX}/amy4Server-linux-${machine}${softfloat}" || Error "amy4Server download failed."
+	download_tool amy4Server.init https://raw.githubusercontent.com/CoverUp137/cns/refs/heads/main/amy/amy4Server.init || Error "amy4Server.init download failed."
 	[ -f '/etc/rc.common' ] && rcCommon='/etc/rc.common'
 	sed -i "s~#!/bin/sh~#!$SHELL $rcCommon~" amy4Server.init
 	sed -i "s~\[amy4Server_install_dir\]~$amy4Server_install_dir~g" amy4Server.init
@@ -120,7 +118,7 @@ InstallFiles() {
 	EOF
 	chmod -R +rwx "$amy4Server_install_dir" /etc/init.d/amy4Server
 	if type systemctl &>/dev/null && [ -z "$(systemctl --failed|grep -q 'Host is down')" ]; then
-		download_tool /lib/systemd/system/amy4Server.service https://gh.0507.dpdns.org/https://raw.githubusercontent.com/CoverUp137/cns/refs/heads/main/amy/amy4Server.service || Error "amy4Server.service download failed."
+		download_tool /lib/systemd/system/amy4Server.service https://raw.githubusercontent.com/CoverUp137/cns/refs/heads/main/amy/amy4Server.service || Error "amy4Server.service download failed."
 		chmod +rwx /lib/systemd/system/amy4Server.service
 		sed -i "s~\[amy4Server_install_dir\]~$amy4Server_install_dir~g"  /lib/systemd/system/amy4Server.service
 		systemctl daemon-reload
@@ -195,9 +193,37 @@ Install() {
 	if ! echo "$ret"|grep -q 'OK' || echo "$ret"|grep -q 'FAILED'; then
 		Error "amy4Server install failed."
 	fi
-	AddAutoStart
-	echo "amy4Server install success."
+	type systemctl &>/dev/null && [ -z "$(systemctl --failed|grep -q 'Host is down')" ] && systemctl restart amy4Server
+	echo $echo_e_arg \
+		"\033[44;37mamy4Server install success.\033[0;34m
+		\r	amy4Server server port:\033[35G${amy4Server_port}
+		\r	amy4Server auth secret:\033[35G${amy4Server_auth_secret}
+		\r	amy4Server client key:\033[35G${amy4Server_clientkey}
+		\r`[ -f /etc/init.d/amy4Server ] && /etc/init.d/amy4Server usage || \"$amy4Server_install_dir/amy4Server.init\" usage`
+		\r`AddAutoStart`\033[0m"
 }
 
-# Main
-Install
+Uninstall() {
+	if [ -z "$amy4Server_install_dir" ]; then
+		echo -n "Please input amy4Server install directory(default is /usr/local/amy4Server): "
+		read amy4Server_install_dir
+	fi
+	Delete >/dev/null 2>&1 && \
+		echo $echo_e_arg "\n\033[44;37mamy4Server uninstall success.\033[0m" || \
+		echo $echo_e_arg "\n\033[41;37mamy4Server uninstall failed.\033[0m"
+}
+
+#script initialization
+ScriptInit() {
+	emulate bash 2>/dev/null #zsh emulation mode
+	if echo -e ''|grep -q 'e'; then
+		echo_e_arg=''
+		echo_E_arg=''
+	else
+		echo_e_arg='-e'
+		echo_E_arg='-E'
+	fi
+}
+
+ScriptInit
+echo $*|grep -qi uninstall && Uninstall || Install
