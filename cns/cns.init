@@ -9,59 +9,99 @@
 # Short-Description: Start cns daemon at boot time
 # Description:       Start cns daemon at boot time
 ### END INIT INFO
+START=99
 
 usage()
 {
-    [ "$(which systemctl)" != "" ] && us="systemctl [start|stop|status|restart] cns.service" || us="$0 [start|stop|status|restart]"
-    echo "Usage:
-    $us
-    Config file is [cns_install_dir]/cns.json"
+	if type systemctl && [ -z "$(systemctl --failed|grep -q 'Host is down')" ]; then
+		us="systemctl [start|stop|status|restart] cns.service"
+	else
+		if [ "$0" = '/etc/rc.common' ]; then
+			us="/etc/init.d/cns [start|stop|status|restart]"\
+		else
+			us="$0 [start|stop|status|restart]"
+		fi
+	fi &>/dev/null
+	echo "Usage:
+	$us
+	Config file is [cns_install_dir]/cns.json"
 }
 
 status()
 {
-    {
-        grep -q cns /proc/`cat "[cns_install_dir]/run.pid" 2>/dev/null`/comm 2>/dev/null && \
-            echo "cns is running..." || \
-            echo "cns is stopped..."
-    } 2>/dev/null
+	{
+		grep -q cns /proc/`cat "[cns_install_dir]/run.pid" 2>/dev/null`/comm 2>/dev/null && \
+			echo "cns is running..." || \
+			echo "cns is stopped..."
+	} 2>/dev/null
 }
+
 
 start()
 {
-    status | grep running && return 0
-    echo -n "Starting cns:"
-    cd "[cns_install_dir]"
-    ./cns -json=cns.json -daemon=true >/dev/null
-    sleep 1
-    for server_port in [cns_tcp_port_list]; do
-        iptables -I INPUT -p 6 --dport $server_port -m comment --comment "cns server port" -j ACCEPT
-        ip6tables -I INPUT -p 6 --dport $server_port -m comment --comment "cns server port" -j ACCEPT
-    done 2>/dev/null
-    grep -q cns /proc/`cat [cns_install_dir]/run.pid`/comm && \
-        echo -e "\033[60G[\033[32m  OK  \033[0m]" || \
-        echo -e "\033[60G[\033[31mFAILED\033[0m]"
+	status | grep running && return 0
+	echo -n "Starting cns:"
+	for server_port in [cns_tcp_port_list]; do
+		iptables -I INPUT -p 6 --dport $server_port -j ACCEPT
+		ip6tables -I INPUT -p 6 --dport $server_port -j ACCEPT
+	done 2>/dev/null
+	cd "[cns_install_dir]"
+	rm -f "[cns_install_dir]/run.pid"
+	./cns -json=cns.json -daemon >/dev/null
+	count=0
+	while [ ! -f "[cns_install_dir]/run.pid" ] && [ "$count" -le 10 ]; do
+		sleep 1
+		count=$((count + 1))
+	done
+	grep -q cns /proc/`cat [cns_install_dir]/run.pid 2>/dev/null`/comm && \
+		echo -e "\033[60G[\033[32m  OK  \033[0m]" || \
+		echo -e "\033[60G[\033[31mFAILED\033[0m]"
 }
 
 stop()
 {
-    for server_port in [cns_tcp_port_list]; do
-        while iptables -D INPUT -p 6 --dport $server_port -m comment --comment "cns server port" -j ACCEPT; do :;done
-        while ip6tables -D INPUT -p 6 --dport $server_port -m comment --comment "cns server port" -j ACCEPT; do :;done
-    done 2>/dev/null
-    status | grep stopped && return 0
-    echo -n "Stopping cns:"
-    kill -9 `cat [cns_install_dir]/run.pid 2>/dev/null` 2>/dev/null
-    sleep 1
-    grep -q cns /proc/`cat [cns_install_dir]/run.pid`/comm && \
-        echo -e "\033[60G[\033[31mFAILED\033[0m]" || \
-        echo -e "\033[60G[\033[32m  OK  \033[0m]"
+	for server_port in [cns_tcp_port_list]; do
+		while iptables -D INPUT -p 6 --dport $server_port -j ACCEPT; do :;done
+		while ip6tables -D INPUT -p 6 --dport $server_port -j ACCEPT; do :;done
+	done 2>/dev/null
+	status | grep stopped && return 0
+	echo -n "Stopping cns:"
+	kill `cat [cns_install_dir]/run.pid 2>/dev/null` 2>/dev/null
+	sleep 1
+	grep -q cns /proc/`cat [cns_install_dir]/run.pid`/comm 2>/dev/null && \
+		echo -e "\033[60G[\033[31mFAILED\033[0m]" || \
+		echo -e "\033[60G[\033[32m  OK  \033[0m]"
 }
 
 restart()
 {
-    stop
-    start
+	stop
+	start
 }
 
-${1:-usage} 2>/dev/null
+systemdStart()
+{
+	status | grep running && return 0
+	cd "[cns_install_dir]"
+	rm -f "[cns_install_dir]/run.pid"
+	for server_port in [cns_tcp_port_list]; do
+		iptables -I INPUT -p 6 --dport $server_port -j ACCEPT
+		ip6tables -I INPUT -p 6 --dport $server_port -j ACCEPT
+	done 2>/dev/null
+	./cns -json=cns.json >/dev/null
+	count=0
+	while [ ! -f "[cns_install_dir]/run.pid" ] && [ "$count" -le 10 ]; do
+		sleep 1
+		count=$((count + 1))
+	done
+}
+
+systemdRestart()
+{
+	stop
+	systemdStart
+}
+
+if [ -z "$initscript" ]; then
+	${1:-usage}
+fi
