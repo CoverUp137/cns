@@ -96,7 +96,7 @@ InstallFiles() {
 	mkdir -p "$amy4Server_install_dir" || Error "Create amy4Server install directory failed."
 	cd "$amy4Server_install_dir" || exit 1
 	github_repo="https://gh.0507.dpdns.org/https://github.com/CoverUp137/cns/releases/download/amy"
-	download_tool amy4Server "$github_repo/${amy4Server_UPX}/linux-${machine}${softfloat}" || Error "amy4Server download failed."
+	download_tool amy4Server "$github_repo/${amy4Server_UPX}/linux_${machine}${softfloat}" || Error "amy4Server download failed."
 	download_tool amy4Server.init https://gh.0507.dpdns.org/https://raw.githubusercontent.com/CoverUp137/cns/refs/heads/main/amy/amy4Server.init || Error "amy4Server.init download failed."
 	[ -f '/etc/rc.common' ] && rcCommon='/etc/rc.common'
 	sed -i "s~#!/bin/sh~#!$SHELL $rcCommon~" amy4Server.init
