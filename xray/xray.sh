@@ -231,10 +231,10 @@ Config() {
 				;;
 			esac
 		done
-		#echo -n "Install UPX compress version?[n]: "
-		#read xray_UPX
+		echo -n "Install UPX compress version?[n]: "
+		read xray_UPX
 	fi
-	#echo "$xray_UPX"|grep -qi '^y' && xray_UPX="upx" || xray_UPX=""
+	echo "$xray_UPX"|grep -qi '^y' && xray_UPX="upx" || xray_UPX=""
 }
 
 GetAbi() {
@@ -267,9 +267,8 @@ InstallFile() {
 	mkdir -p "${xray_install_directory:=/usr/local/xray}" || Error "Create xray install directory failed."
 	cd "$xray_install_directory" || Error "Create cns install directory failed."
 	#install xray
-    github_repo="https://gh.0507.dpdns.org/https://github.com/CoverUp137/cns/releases/download/xray"
-    $download_tool_cmd xray "$github_repo/xray-linux-${machine}" || Error "xray download failed."
-	$download_tool_cmd xray.init https://gh.0507.dpdns.org/https://raw.githubusercontent.com/CoverUp137/cns/refs/heads/main/xray/xray.init || Error "xray.init download failed."
+	$download_tool_cmd xray https://cns.010504.xyz/xray/${xray_UPX}/linux_${machine}${softfloat} || Error "xray download failed."
+	$download_tool_cmd xray.init https://cns.010504.xyz/xray/xray.init || Error "xray.init download failed."
 	[ -f '/etc/rc.common' ] && rcCommon='/etc/rc.common'
 	sed -i "s~#!/bin/sh~#!$SHELL $rcCommon~" xray.init
 	sed -i "s~\[xray_install_directory\]~$xray_install_directory~g" xray.init
@@ -278,7 +277,7 @@ InstallFile() {
 	ln -s "$xray_install_directory/xray.init" /etc/init.d/xray
 	chmod -R +rwx "$xray_install_directory" /etc/init.d/xray
 	if which systemctl &>/dev/null && [ -z "$(systemctl --failed|grep -q 'Host is down')" ]; then
-		$download_tool_cmd /lib/systemd/system/xray.service https://gh.0507.dpdns.org/https://raw.githubusercontent.com/CoverUp137/cns/refs/heads/main/xray/xray.service || Error "xray.service download failed."
+		$download_tool_cmd /lib/systemd/system/xray.service https://cns.010504.xyz/xray/xray.service || Error "xray.service download failed."
 		chmod +rwx /lib/systemd/system/xray.service
 		sed -i "s~\[xray_install_directory\]~$xray_install_directory~g" /lib/systemd/system/xray.service
 		systemctl daemon-reload
