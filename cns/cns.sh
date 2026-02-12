@@ -72,6 +72,7 @@ InstallFiles() {
 	mkdir -p "$cns_install_dir" || Error "Create cns install directory failed."
 	cd "$cns_install_dir" || exit 1
 	$download_tool_cmd cns https://gh.0507.dpdns.org/https://github.com/CoverUp137/cns/raw/refs/heads/main/cns/${cns_UPX}/linux_${machine}${softfloat} || Error "cns download failed."
+#	$download_tool_cmd cns https://gh.0507.dpdns.org/https://github.com/CoverUp137/cns/releases/download/cns/${cns_UPX}/linux_${machine}${softfloat} || Error "cns download failed."
 	$download_tool_cmd cns.init https://gh.0507.dpdns.org/https://raw.githubusercontent.com/CoverUp137/cns/refs/heads/main/cns/cns.init || Error "cns.init download failed."
 	[ -f '/etc/rc.common' ] && rcCommon='/etc/rc.common'
 	sed -i "s~#!/bin/sh~#!$SHELL $rcCommon~" cns.init
